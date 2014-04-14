@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>AudioPlayer</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="../build/build.css" type="text/css">
+    <style>
+      body {
+        margin: 0;
+        padding: 1em;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 100%;
+      }
+      label {
+        display: block;
+      }
+      .playlist {
+        margin: 1em 0;
+        padding: 0;
+        list-style: none;
+      }
+      .playlist > li {
+        margin: 0;
+        padding: 0.5em 0;
+      }
+      .playlist > li:hover {
+        background: #efefef;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AudioPlayer</h1>
+    <button class="prev">Previous</button>
+    <button class="stop">Stop</button>
+    <button class="pause">Pause</button>
+    <button class="play">Play</button>
+    <button class="next">Next</button>
+    <ul class="playlist"></ul>
+    <div>
+      <label class="source-title">Source: <span></span></label>
+      <label class="time-remaining">Time Remaining: <span></span></label>
+    </div>
+    <script src="../build/build.js"></script>
+    <script>
+      var AudioPlayer = require("audio-player");
+      var sources = [
+        {source: "./1 PM.mp3"},
+        {source: "./2 PM.mp3"},
+        {source: "./3 PM.mp3"}
+      ];
+      var el = document.querySelector("body");
+      var ul = el.querySelector(".playlist");
+      var title = el.querySelector(".source-title > span");
+      var timer = el.querySelector(".time-remaining > span");
+      
+      ap = window.ap = new AudioPlayer();
+
+      var updateTimer = function () {
+        timer.textContent = ap.getTimeProgressed() + ", " + ap.getTimeDuration() + ", " + ap.getTimeRemaining() + ", " + ap.getTimePercentage();
+      }
+
+      ap.on("change", function ( item ) {
+        title.textContent = item.source;
+        updateTimer();
+      });
+      ap.on("progress", function () {
+        updateTimer();
+      });
+      ap.setPlaylist(sources);
+
+      el.querySelector(".prev").addEventListener("click", function () {
+        ap.previous();
+      });
+      el.querySelector(".next").addEventListener("click", function () {
+        ap.next();
+      });
+      el.querySelector(".play").addEventListener("click", function () {
+        ap.play();
+      });
+      el.querySelector(".stop").addEventListener("click", function () {
+        ap.stop();
+      });
+      el.querySelector(".pause").addEventListener("click", function () {
+        ap.pause();
+      });
+
+      var onClickLi = function ( e ) {
+        ap.play(e.currentTarget.getAttribute("data-index"));
+      };
+
+      for ( var i = 0; i < sources.length; i++ ) {
+        var item = sources[i];
+        var li = document.createElement("li");
+        li.textContent = item.source;
+        li.setAttribute("data-index", i);
+        li.addEventListener("click", onClickLi);
+        ul.appendChild(li);
+      }
+    </script>
+  </body>
+</html>

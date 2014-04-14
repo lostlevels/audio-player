@@ -1,0 +1,17 @@
+{
+  "name": "audio-player",
+  "repo": "tm-components/audio-player",
+  "description": "An component to play audio from a list of sources.",
+  "version": "0.0.1",
+  "keywords": [
+    "audio",
+    "player"
+  ],
+  "dependencies": {
+    "component/emitter": "*",
+    "tm-components/point": "*"
+  },
+  "scripts": [
+    "index.js"
+  ]
+}
