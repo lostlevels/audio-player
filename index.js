@@ -133,18 +133,66 @@ AudioPlayer.prototype.destroy = function () {
   this.clearPlaylist();
 };
 
+AudioPlayer.prototype.createPlaylistIfNone = function () {
+  if ( !this.playlist ) {
+    this.createPlaylist(true);
+  }
+};
+
+AudioPlayer.prototype.createPlaylist = function ( silent ) {
+  this.setPlaylist({tracks:[]}, silent);
+};
+
 AudioPlayer.prototype.clearPlaylist = function () {
   for ( key in this.cache ) {
     this.cache[key].destroy();
   }
-  delete this.list;
+  delete this.index;
+  delete this.playlist;
 };
 
-AudioPlayer.prototype.setPlaylist = function ( list ) {
-  this.clearPlaylist();
-  if ( list && list.join && list.concat ) {
-    this.list = list.concat();
+AudioPlayer.prototype.setPlaylist = function ( playlist, silent ) {
+  if ( playlist.tracks && playlist.tracks.join ) {
+    this.kill();
+    this.clearPlaylist();
+    this.playlist = playlist;
+    if ( !silent ) {
+      this.emit("set:playlist");
+    }
   }
+};
+
+AudioPlayer.prototype.getCurrentPlaylistItem = function () {
+  if ( this.index && this.playlist && this.index < this.playlist.tracks.length ) {
+    return this.playlist.tracks[this.index];
+  }
+};
+
+AudioPlayer.prototype.addItemToPlaylist = function ( item , silent ) {
+  if ( item.source ) {
+    this.createPlaylistIfNone();
+    this.playlist.tracks.push(item);
+    if ( !silent ) {
+      this.emit("update:playlist");
+    }
+    return this.playlist.tracks.length - 1;
+  }
+
+  return -1;
+};
+
+AudioPlayer.prototype.addToPlaylist = function ( items ) {
+  if ( items.join ) {
+    for ( var i = 0; i < items.length; i++ ) {
+      this.addItemToPlaylist(items[i], true);
+    }
+    this.emit("update:playlist");
+  }
+  else {
+    this.addItemToPlaylist(items);
+  }
+
+  return this.playlist.tracks.length - 1;
 };
 
 AudioPlayer.prototype.setVolume = function ( value ) {
@@ -159,71 +207,6 @@ AudioPlayer.prototype.getAudioWrapper = function ( source ) {
     this.cache[source] = new AudioWrapper(source);
   }
   return this.cache[source];
-};
-
-AudioPlayer.prototype.prepare = function ( index ) {
-  if ( this.list && index < this.list.length ) {
-    this.getAudioWrapper(index);
-  }
-};
-
-AudioPlayer.prototype.kill = function () {
-  if ( this.wrapper ) {
-    this.wrapper.off();
-    this.wrapper.stop();
-    delete this.wrapper;
-  }
-};
-
-AudioPlayer.prototype.play = function ( index ) {
-  index = !isNaN(index) ? parseInt(index) : undefined; 
-
-  if ( index != undefined && this.list && this.list.length > 0 && index < this.list.length ) {
-    this.kill();
-    var item = this.list[index];
-    this.index = index;
-    this.wrapper = this.getAudioWrapper(item.source);
-    this.wrapper.on("progress", this.onWrapperProgress.bind(this));
-    this.wrapper.once("almostdone", this.onWrapperAlmostDone.bind(this));
-    this.wrapper.once("finished", this.onWrapperFinished.bind(this));
-    this.wrapper.once("error", this.onWrapperError.bind(this));
-    this.wrapper.setVolume(this.volume);
-    this.wrapper.play();
-    this.emit("change", item);
-  }
-  else if ( this.wrapper ) {
-    this.wrapper.play();
-  }
-};
-
-AudioPlayer.prototype.pause = function () {
-  if ( this.wrapper ) {
-    this.wrapper.pause();
-  }
-};
-
-AudioPlayer.prototype.stop = function () {
-  if ( this.wrapper ) {
-    this.wrapper.stop();
-  }
-};
-
-AudioPlayer.prototype.seek = function ( percent ) {
-  if ( this.wrapper ) {
-    this.wrapper.seekTo(percent);
-  }
-};
-
-AudioPlayer.prototype.next = function () {
-  if ( this.index >= 0 && this.index + 1 < this.list.length ) {
-    this.play(this.index + 1);
-  }
-};
-
-AudioPlayer.prototype.previous = function () {
-  if ( this.index >= 0 && this.index - 1 >= 0 ) {
-    this.play(this.index - 1);
-  }
 };
 
 AudioPlayer.prototype.getTimeDuration = function () {
@@ -254,6 +237,84 @@ AudioPlayer.prototype.getTimePercentage = function () {
   return 0;
 };
 
+AudioPlayer.prototype.prepare = function ( index ) {
+  if ( this.playlist.tracks && index < this.playlist.tracks.length ) {
+    this.getAudioWrapper(index);
+  }
+};
+
+AudioPlayer.prototype.kill = function () {
+  if ( this.wrapper ) {
+    this.wrapper.off();
+    this.wrapper.stop();
+    delete this.wrapper;
+  }
+};
+
+AudioPlayer.prototype.play = function ( index ) {
+  index = !isNaN(index) ? parseInt(index) : undefined; 
+
+  if ( index != undefined && this.playlist.tracks && this.playlist.tracks.length > 0 && index < this.playlist.tracks.length ) {
+    this.kill();
+    var item = this.playlist.tracks[index];
+    this.index = index;
+    this.wrapper = this.getAudioWrapper(item.source);
+    this.wrapper.on("progress", this.onWrapperProgress.bind(this));
+    this.wrapper.once("almostdone", this.onWrapperAlmostDone.bind(this));
+    this.wrapper.once("finished", this.onWrapperFinished.bind(this));
+    this.wrapper.once("error", this.onWrapperError.bind(this));
+    this.wrapper.setVolume(this.volume);
+    this.emit("change:audio", item);
+  }
+
+  if ( this.wrapper ) {
+    this.wrapper.play();
+    this.emit("audio:play");
+  }
+};
+
+AudioPlayer.prototype.pause = function () {
+  if ( this.wrapper ) {
+    this.wrapper.pause();
+    this.emit("audio:pause");
+  }
+};
+
+AudioPlayer.prototype.toggle = function () {
+  if ( this.wrapper.audio.paused ) {
+    this.play();
+  }
+  else {
+    this.pause();
+  }
+};
+
+AudioPlayer.prototype.stop = function () {
+  if ( this.wrapper ) {
+    this.wrapper.stop();
+    this.emit("audio:stop");
+  }
+};
+
+AudioPlayer.prototype.seek = function ( percent ) {
+  if ( this.wrapper ) {
+    this.wrapper.seekTo(percent);
+    this.emit("audio:seek", percent);
+  }
+};
+
+AudioPlayer.prototype.next = function () {
+  if ( this.index >= 0 && this.index + 1 < this.playlist.tracks.length ) {
+    this.play(this.index + 1);
+  }
+};
+
+AudioPlayer.prototype.previous = function () {
+  if ( this.index >= 0 && this.index - 1 >= 0 ) {
+    this.play(this.index - 1);
+  }
+};
+
 AudioPlayer.prototype.onWrapperAlmostDone = function () {
   this.prepare(this.index + 1);
 };
@@ -263,12 +324,12 @@ AudioPlayer.prototype.onWrapperFinished = function () {
 };
 
 AudioPlayer.prototype.onWrapperError = function () {
-  this.emit("error", this.list[this.index]);
+  this.emit("error:audio", this.playlist.tracks[this.index]);
   this.next();
 };
 
 AudioPlayer.prototype.onWrapperProgress = function () {
-  this.emit("progress");
+  this.emit("audio:progress", this.getTimePercentage());
 };
 
 Emitter(AudioPlayer.prototype);
