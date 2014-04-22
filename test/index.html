@@ -42,11 +42,13 @@
     <script src="../build/build.js"></script>
     <script>
       var AudioPlayer = require("audio-player");
-      var sources = [
-        {source: "./1 PM.mp3"},
-        {source: "./2 PM.mp3"},
-        {source: "./3 PM.mp3"}
-      ];
+      var playlist = {
+        tracks:[
+          {source: "./1 PM.mp3"},
+          {source: "./2 PM.mp3"},
+          {source: "./3 PM.mp3"}
+        ]
+      };
       var el = document.querySelector("body");
       var ul = el.querySelector(".playlist");
       var title = el.querySelector(".source-title > span");
@@ -58,14 +60,14 @@
         timer.textContent = ap.getTimeProgressed() + ", " + ap.getTimeDuration() + ", " + ap.getTimeRemaining() + ", " + ap.getTimePercentage();
       }
 
-      ap.on("change", function ( item ) {
+      ap.on("change:audio", function ( item ) {
         title.textContent = item.source;
         updateTimer();
       });
-      ap.on("progress", function () {
+      ap.on("audio:progress", function () {
         updateTimer();
       });
-      ap.setPlaylist(sources);
+      ap.setPlaylist(playlist);
 
       el.querySelector(".prev").addEventListener("click", function () {
         ap.previous();
@@ -87,8 +89,8 @@
         ap.play(e.currentTarget.getAttribute("data-index"));
       };
 
-      for ( var i = 0; i < sources.length; i++ ) {
-        var item = sources[i];
+      for ( var i = 0; i < ap.playlist.tracks.length; i++ ) {
+        var item = ap.playlist.tracks[i];
         var li = document.createElement("li");
         li.textContent = item.source;
         li.setAttribute("data-index", i);

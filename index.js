@@ -147,6 +147,7 @@ AudioPlayer.prototype.clearPlaylist = function () {
   for ( key in this.cache ) {
     this.cache[key].destroy();
   }
+  this.cache = {};
   delete this.index;
   delete this.playlist;
 };
@@ -168,7 +169,7 @@ AudioPlayer.prototype.getCurrentPlaylistItem = function () {
   }
 };
 
-AudioPlayer.prototype.addItemToPlaylist = function ( item , silent ) {
+AudioPlayer.prototype.addItemToPlaylist = function ( item, silent ) {
   if ( item.source ) {
     this.createPlaylistIfNone();
     this.playlist.tracks.push(item);
@@ -194,6 +195,36 @@ AudioPlayer.prototype.addToPlaylist = function ( items ) {
 
   return this.playlist.tracks.length - 1;
 };
+
+AudioPlayer.prototype.removeItemFromPlaylist = function( item, silent ) {
+  if ( item.source ) {
+    index = this.playlist.tracks.indexOf(item);
+    if ( index > -1 ) {
+      this.playlist.tracks.splice(index, 1)
+      if ( !silent ) {
+        this.emit("update:playlist");
+      }
+      return true;
+    }
+  }
+  return false;
+};
+
+AudioPlayer.prototype.removeFromPlaylist = function ( items ) {
+  var result = false;
+  if ( items.join ) {
+    for ( var i = 0; i < items.length; i++ ) {
+      if ( this.removeItemFromPlaylist(items[i], true) ) {
+        result = true;
+      }
+    }
+    this.emit("update:playlist");
+  }
+  else {
+    result = this.removeItemFromPlaylist(items);
+  }
+  return result;
+}
 
 AudioPlayer.prototype.setVolume = function ( value ) {
   this.volume = value;
@@ -245,8 +276,8 @@ AudioPlayer.prototype.prepare = function ( index ) {
 
 AudioPlayer.prototype.kill = function () {
   if ( this.wrapper ) {
+    this.stop();
     this.wrapper.off();
-    this.wrapper.stop();
     delete this.wrapper;
   }
 };
@@ -281,7 +312,7 @@ AudioPlayer.prototype.pause = function () {
 };
 
 AudioPlayer.prototype.toggle = function () {
-  if ( this.wrapper.audio.paused ) {
+  if ( this.wrapper && this.wrapper.audio.paused ) {
     this.play();
   }
   else {
@@ -293,6 +324,12 @@ AudioPlayer.prototype.stop = function () {
   if ( this.wrapper ) {
     this.wrapper.stop();
     this.emit("audio:stop");
+  }
+};
+
+AudioPlayer.prototype.stopItemIfPlaying = function ( item ) {
+  if ( this.wrapper && this.index >= 0 && this.playlist.tracks.indexOf(item) == this.index ) {
+    this.stop();
   }
 };
 
