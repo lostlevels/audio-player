@@ -65,6 +65,7 @@ AudioPlayer.prototype.destroyAudio = function ( audio ) {
 };
 
 AudioPlayer.prototype.killAudio = function () {
+  if ( !this.audio ) return;
   this.stop();
   this.destroyAudio(this.audio);
   delete this.audio;
@@ -93,11 +94,13 @@ AudioPlayer.prototype.play = function ( index ) {
 };
 
 AudioPlayer.prototype.pause = function () {
+  if ( !this.audio || this.audio.error ) return;
   this.audio.pause();
   this.trigger("pause");
 };
 
 AudioPlayer.prototype.stop = function () {
+  if ( !this.audio || this.audio.error ) return;
   this.audio.currentTime = 0.0;
   this.audio.pause();
   this.trigger("stop");
