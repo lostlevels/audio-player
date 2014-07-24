@@ -1,374 +1,145 @@
 
-var Emitter = require("emitter");
 var Point = require("point");
-
-function AudioWrapper ( source ) {
-  this.init(source);
-}
-
-AudioWrapper.prototype.init = function( source ) {
-  this.audio = new Audio();
-  this.audio.src = source;
-  this.listeners = {
-    ended: this.onEnded.bind(this),
-    error: this.onError.bind(this)
-  };
-};
-
-AudioWrapper.prototype.destroy = function () {
-  this.stop();
-  this.unwatch();
-  delete this.audio;
-  delete this.listeners;
-};
-
-AudioWrapper.prototype.watch = function () {
-  this.unwatch();
-  this.watching = true;
-  this.audio.addEventListener("ended", this.listeners.ended);
-  this.audio.addEventListener("error", this.listeners.error);
-  this.startTimer();
-};
-
-AudioWrapper.prototype.unwatch = function () {
-  delete this.watching;
-  this.stopTimer();
-  this.audio.removeEventListener("ended", this.onEnded.bind(this));
-  this.audio.removeEventListener("error", this.onError.bind(this));
-};
-
-AudioWrapper.prototype.startTimer = function () {
-  this.stopTimer();
-  this.timer = setTimeout((function () {
-    this.onStep();
-    this.startTimer();
-  }).bind(this), 20);
-};
-
-AudioWrapper.prototype.stopTimer = function () {
-  if ( this.timer ) {
-    clearTimeout(this.timer);
-    delete this.timer;
-  }
-};
-
-AudioWrapper.prototype.play = function () {
-  this.watch();
-  this.audio.play();
-};
-
-AudioWrapper.prototype.pause = function () {
-  if ( !this.invalid ) {
-    this.audio.pause();
-    // TODO Add fade out.
-  }
-};
-
-AudioWrapper.prototype.stop = function () {
-  if ( !this.invalid ) {
-    this.audio.currentTime = 0.0;
-    this.audio.pause();
-  }
-};
-
-AudioWrapper.prototype.setVolume = function ( value ) {
-  this.audio.volume = Point.clamp(value, 0.0, 1.0);
-};
-
-AudioWrapper.prototype.seekTo = function ( percent ) {
-  if ( !this.invalid ) {
-    percent = Point.clamp(percent, 0, 1.0);
-    this.audio.currentTime = this.audio.duration * percent;
-  }
-};
-
-AudioWrapper.prototype.onError = function ( e ) {
-  this.invalid = true;
-  this.emit("error");
-};
-
-AudioWrapper.prototype.onEnded = function ( e ) {
-  this.emit("finished");
-};
-
-AudioWrapper.prototype.onStep = function () {
-  var index = this.audio.currentTime;
-  var length = this.audio.duration;
-  var percent = index / length;
-  var timeleft = length - index;
-  
-  // Almost done warning.
-  if ( !this.firedAlmostDone && percent > 0.9 ) {
-    this.firedAlmostDone = true;
-    this.emit("almostdone");
-  } 
-  else {
-    delete this.firedAlmostDone;
-  }
-
-  // One second remaining warning.
-  if ( !this.firedTimeLeft && timeleft <= 1.0 ) {
-    this.firedTimeLeft = true;
-    this.emit("secondremaining");
-  }
-  else {
-    delete this.firedTimeLeft;
-  }
-
-  if ( !this.timeleft || this.timeleft != timeleft ) {
-    this.timeleft = timeleft;
-    this.emit("progress");
-  }
-};
-
-Emitter(AudioWrapper.prototype);
+var Emitter = require("emitter");
 
 function AudioPlayer () {
-  this.volume = 1.0;
-  this.cache = {};
+  this.items = [];
+  this.index = -1;
+  this.continuous = true;
+  this.vol = 1.0;
+  this.listeners = {
+    audio: {
+      error: this.onAudioError.bind(this),
+      ended: this.onAudioEnded.bind(this)
+    }
+  };
+  this.events = new Emitter();
 }
 
-AudioPlayer.prototype.destroy = function () {
-  this.kill();
-  this.clearPlaylist();
+AudioPlayer.prototype.trigger = function ( event ) {
+  this.events.emit(event);
 };
 
-AudioPlayer.prototype.createPlaylistIfNone = function () {
-  if ( !this.playlist ) {
-    this.createPlaylist(true);
+AudioPlayer.prototype.add = function ( item ) {
+  if ( item && item.source && typeof item.source == "string" ) {
+    this.items.push(item);
+    return this.items.length - 1;
   }
-};
-
-AudioPlayer.prototype.createPlaylist = function ( silent ) {
-  this.setPlaylist({tracks:[]}, silent);
-};
-
-AudioPlayer.prototype.clearPlaylist = function () {
-  for ( key in this.cache ) {
-    this.cache[key].destroy();
-  }
-  this.cache = {};
-  delete this.index;
-  delete this.playlist;
-};
-
-AudioPlayer.prototype.setPlaylist = function ( playlist, silent ) {
-  if ( playlist.tracks && playlist.tracks.join ) {
-    this.kill();
-    this.clearPlaylist();
-    this.playlist = playlist;
-    if ( !silent ) {
-      this.emit("set:playlist");
-    }
-  }
-};
-
-AudioPlayer.prototype.getCurrentPlaylistItem = function () {
-  if ( this.index && this.playlist && this.index < this.playlist.tracks.length ) {
-    return this.playlist.tracks[this.index];
-  }
-};
-
-AudioPlayer.prototype.addItemToPlaylist = function ( item, silent ) {
-  if ( item.source ) {
-    this.createPlaylistIfNone();
-    this.playlist.tracks.push(item);
-    if ( !silent ) {
-      this.emit("update:playlist");
-    }
-    return this.playlist.tracks.length - 1;
-  }
-
   return -1;
 };
 
-AudioPlayer.prototype.addToPlaylist = function ( items ) {
-  if ( items.join ) {
-    for ( var i = 0; i < items.length; i++ ) {
-      this.addItemToPlaylist(items[i], true);
+AudioPlayer.prototype.addAndPlay = function ( item ) {
+  var index = this.add(item);
+  if ( index >= 0 ) {
+    this.play(index);
+  }
+};
+
+AudioPlayer.prototype.remove = function ( item ) {
+  var index = this.items.indexOf(item);
+  if ( index > -1 ) {
+    if ( index == this.index ) {
+      this.killAudio();
     }
-    this.emit("update:playlist");
-  }
-  else {
-    this.addItemToPlaylist(items);
-  }
-
-  return this.playlist.tracks.length - 1;
-};
-
-AudioPlayer.prototype.removeItemFromPlaylist = function( item, silent ) {
-  if ( item.source ) {
-    index = this.playlist.tracks.indexOf(item);
-    if ( index > -1 ) {
-      this.playlist.tracks.splice(index, 1)
-      if ( !silent ) {
-        this.emit("update:playlist");
-      }
-      return true;
-    }
-  }
-  return false;
-};
-
-AudioPlayer.prototype.removeFromPlaylist = function ( items ) {
-  var result = false;
-  if ( items.join ) {
-    for ( var i = 0; i < items.length; i++ ) {
-      if ( this.removeItemFromPlaylist(items[i], true) ) {
-        result = true;
-      }
-    }
-    this.emit("update:playlist");
-  }
-  else {
-    result = this.removeItemFromPlaylist(items);
-  }
-  return result;
-}
-
-AudioPlayer.prototype.setVolume = function ( value ) {
-  this.volume = value;
-  if ( this.wrapper ) {
-    this.wrapper.setVolume(this.volume);
+    this.items.splice(index, 1);
   }
 };
 
-AudioPlayer.prototype.getAudioWrapper = function ( source ) {
-  if ( !this.cache[source] ) {
-    this.cache[source] = new AudioWrapper(source);
+AudioPlayer.prototype.createAudio = function ( source ) {
+  audio = new Audio(source);
+  audio.source = source;
+  audio.volume = this.vol;
+  for ( var key in this.listeners.audio ) {
+    audio.addEventListener(key, this.listeners.audio[key]);
   }
-  return this.cache[source];
+  return audio;
 };
 
-AudioPlayer.prototype.getTimeDuration = function () {
-  if ( this.wrapper ) {
-    return this.wrapper.audio.duration;
-  }
-  return 0;
-};
-
-AudioPlayer.prototype.getTimeRemaining = function () {
-  if ( this.wrapper ) {
-    return this.wrapper.audio.duration - this.wrapper.audio.currentTime;
-  }
-  return 0;
-};
-
-AudioPlayer.prototype.getTimeProgressed = function () {
-  if ( this.wrapper ) {
-    return this.wrapper.audio.currentTime;
-  }
-  return 0;
-}
-
-AudioPlayer.prototype.getTimePercentage = function () {
-  if ( this.wrapper ) {
-    return this.wrapper.audio.currentTime / this.wrapper.audio.duration;
-  }
-  return 0;
-};
-
-AudioPlayer.prototype.prepare = function ( index ) {
-  if ( this.playlist.tracks && index < this.playlist.tracks.length ) {
-    this.getAudioWrapper(index);
+AudioPlayer.prototype.destroyAudio = function ( audio ) {
+  if ( !audio ) return;
+  for ( var key in this.listeners.audio ) {
+    audio.removeEventListener(key, this.listeners.audio[key]);
   }
 };
 
-AudioPlayer.prototype.kill = function () {
-  if ( this.wrapper ) {
-    this.stop();
-    this.wrapper.off();
-    delete this.wrapper;
-  }
+AudioPlayer.prototype.killAudio = function () {
+  this.stop();
+  this.destroyAudio(this.audio);
+  delete this.audio;
 };
 
 AudioPlayer.prototype.play = function ( index ) {
-  index = !isNaN(index) ? parseInt(index) : undefined; 
+  index = index != undefined ? index : this.index;
+  var source = (this.items[index] || {}).source;
+  if ( !source ) return false;
 
-  if ( index != undefined && this.playlist.tracks && this.playlist.tracks.length > 0 && index < this.playlist.tracks.length ) {
-    this.kill();
-    var item = this.playlist.tracks[index];
+  var changed = false;
+  if ( index != this.index || (this.audio && this.audio.source != source) ) {
     this.index = index;
-    this.wrapper = this.getAudioWrapper(item.source);
-    this.wrapper.on("progress", this.onWrapperProgress.bind(this));
-    this.wrapper.once("almostdone", this.onWrapperAlmostDone.bind(this));
-    this.wrapper.once("finished", this.onWrapperFinished.bind(this));
-    this.wrapper.once("error", this.onWrapperError.bind(this));
-    this.wrapper.setVolume(this.volume);
-    this.emit("change:audio", item);
+    changed = true;
   }
 
-  if ( this.wrapper ) {
-    this.wrapper.play();
-    this.emit("audio:play");
+  if ( changed ) {
+    this.destroyAudio(this.audio);
+    this.audio = this.createAudio(source);
   }
+
+  this.audio.play();
+  this.trigger("play");
+  return true;
 };
 
 AudioPlayer.prototype.pause = function () {
-  if ( this.wrapper ) {
-    this.wrapper.pause();
-    this.emit("audio:pause");
-  }
-};
-
-AudioPlayer.prototype.toggle = function () {
-  if ( this.wrapper && this.wrapper.audio.paused ) {
-    this.play();
-  }
-  else {
-    this.pause();
-  }
+  this.audio.pause();
+  this.trigger("pause");
 };
 
 AudioPlayer.prototype.stop = function () {
-  if ( this.wrapper ) {
-    this.wrapper.stop();
-    this.emit("audio:stop");
-  }
-};
-
-AudioPlayer.prototype.stopItemIfPlaying = function ( item ) {
-  if ( this.wrapper && this.index >= 0 && this.playlist.tracks.indexOf(item) == this.index ) {
-    this.stop();
-  }
-};
-
-AudioPlayer.prototype.seek = function ( percent ) {
-  if ( this.wrapper ) {
-    this.wrapper.seekTo(percent);
-    this.emit("audio:seek", percent);
-  }
+  this.audio.currentTime = 0.0;
+  this.audio.pause();
 };
 
 AudioPlayer.prototype.next = function () {
-  if ( this.index >= 0 && this.index + 1 < this.playlist.tracks.length ) {
-    this.play(this.index + 1);
-  }
+  var index = this.index + 1; 
+  this.stop();
+  this.trigger("next");
+  this.play(index);
 };
 
 AudioPlayer.prototype.previous = function () {
-  if ( this.index >= 0 && this.index - 1 >= 0 ) {
-    this.play(this.index - 1);
+  var index = this.index - 1; 
+  this.stop();
+  this.trigger("previous");
+  this.play(index);
+};
+
+AudioPlayer.prototype.volume = function ( value ) {
+  this.vol = Point.clamp(value, 0.0, 1.0);
+
+  if ( this.audio ) {
+    this.audio.volume = this.vol;
+  }
+
+  return this.vol;
+};
+
+AudioPlayer.prototype.seek = function ( percent ) {
+  if ( !this.audio || this.audio.error ) return;
+
+  percent = Point.clamp(percent, 0.0, 1.0);
+  this.audio.currentTime = percent * this.audio.duration;
+};
+
+AudioPlayer.prototype.onAudioError = function ( e ) {
+  this.trigger("error");
+  this.killAudio();
+};
+
+AudioPlayer.prototype.onAudioEnded = function( e ) {
+  this.trigger("ended");
+  if ( this.continuous ) {
+    this.next();
   }
 };
-
-AudioPlayer.prototype.onWrapperAlmostDone = function () {
-  this.prepare(this.index + 1);
-};
-
-AudioPlayer.prototype.onWrapperFinished = function () {
-  this.next();
-};
-
-AudioPlayer.prototype.onWrapperError = function () {
-  this.emit("error:audio", this.playlist.tracks[this.index]);
-  this.next();
-};
-
-AudioPlayer.prototype.onWrapperProgress = function () {
-  this.emit("audio:progress", this.getTimePercentage());
-};
-
-Emitter(AudioPlayer.prototype);
 
 module.exports = AudioPlayer;

@@ -42,61 +42,11 @@
     <script src="../build/build.js"></script>
     <script>
       var AudioPlayer = require("audio-player");
-      var playlist = {
-        tracks:[
-          {source: "./1 PM.mp3"},
-          {source: "./2 PM.mp3"},
-          {source: "./3 PM.mp3"}
-        ]
-      };
-      var el = document.querySelector("body");
-      var ul = el.querySelector(".playlist");
-      var title = el.querySelector(".source-title > span");
-      var timer = el.querySelector(".time-remaining > span");
-      
-      ap = window.ap = new AudioPlayer();
+      var ap = new AudioPlayer();
+      ap.addAndPlay({source:"./1 PM.mp3"});
+      ap.add({source:"./2 PM.mp3"});
+      ap.add({source:"./3 PM.mp3"});
 
-      var updateTimer = function () {
-        timer.textContent = ap.getTimeProgressed() + ", " + ap.getTimeDuration() + ", " + ap.getTimeRemaining() + ", " + ap.getTimePercentage();
-      }
-
-      ap.on("change:audio", function ( item ) {
-        title.textContent = item.source;
-        updateTimer();
-      });
-      ap.on("audio:progress", function () {
-        updateTimer();
-      });
-      ap.setPlaylist(playlist);
-
-      el.querySelector(".prev").addEventListener("click", function () {
-        ap.previous();
-      });
-      el.querySelector(".next").addEventListener("click", function () {
-        ap.next();
-      });
-      el.querySelector(".play").addEventListener("click", function () {
-        ap.play();
-      });
-      el.querySelector(".stop").addEventListener("click", function () {
-        ap.stop();
-      });
-      el.querySelector(".pause").addEventListener("click", function () {
-        ap.pause();
-      });
-
-      var onClickLi = function ( e ) {
-        ap.play(e.currentTarget.getAttribute("data-index"));
-      };
-
-      for ( var i = 0; i < ap.playlist.tracks.length; i++ ) {
-        var item = ap.playlist.tracks[i];
-        var li = document.createElement("li");
-        li.textContent = item.source;
-        li.setAttribute("data-index", i);
-        li.addEventListener("click", onClickLi);
-        ul.appendChild(li);
-      }
     </script>
   </body>
 </html>
