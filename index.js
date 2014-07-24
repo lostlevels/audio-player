@@ -17,12 +17,13 @@ function AudioPlayer () {
 }
 
 AudioPlayer.prototype.trigger = function ( event ) {
-  this.events.emit(event);
+  this.events.emit(event, this);
 };
 
 AudioPlayer.prototype.add = function ( item ) {
   if ( item && item.source && typeof item.source == "string" ) {
     this.items.push(item);
+    this.trigger("add");
     return this.items.length - 1;
   }
   return -1;
@@ -42,6 +43,7 @@ AudioPlayer.prototype.remove = function ( item ) {
       this.killAudio();
     }
     this.items.splice(index, 1);
+    this.trigger("remove");
   }
 };
 
@@ -82,6 +84,7 @@ AudioPlayer.prototype.play = function ( index ) {
   if ( changed ) {
     this.destroyAudio(this.audio);
     this.audio = this.createAudio(source);
+    this.trigger("changed");
   }
 
   this.audio.play();
@@ -97,6 +100,7 @@ AudioPlayer.prototype.pause = function () {
 AudioPlayer.prototype.stop = function () {
   this.audio.currentTime = 0.0;
   this.audio.pause();
+  this.trigger("stop");
 };
 
 AudioPlayer.prototype.next = function () {
@@ -114,7 +118,12 @@ AudioPlayer.prototype.previous = function () {
 };
 
 AudioPlayer.prototype.volume = function ( value ) {
-  this.vol = Point.clamp(value, 0.0, 1.0);
+  var volume = Point.clamp(value, 0.0, 1.0);
+
+  if ( this.vol != volume ) {
+    this.vol = volume;
+    this.trigger("volume");
+  }
 
   if ( this.audio ) {
     this.audio.volume = this.vol;
