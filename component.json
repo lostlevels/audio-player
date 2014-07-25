@@ -2,7 +2,7 @@
   "name": "audio-player",
   "repo": "tm-components/audio-player",
   "description": "Play a bunch of songs in a row.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "keywords": [
     "audio",
     "player"

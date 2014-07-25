@@ -78,14 +78,15 @@ AudioPlayer.prototype.play = function ( index ) {
   if ( !source ) return false;
 
   var changed = false;
-  if ( index != this.index || (this.audio && this.audio.source != source) ) {
+  if ( index != this.index || 
+    (this.audio && this.audio.source != source) || 
+    !this.audio ) {
     this.index = index;
     changed = true;
   }
 
   if ( changed ) {
-    this.stop();
-    this.destroyAudio(this.audio);
+    this.killAudio();
     this.audio = this.createAudio(source);
     this.trigger("change");
   }
