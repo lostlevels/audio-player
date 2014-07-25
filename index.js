@@ -73,6 +73,7 @@ AudioPlayer.prototype.killAudio = function () {
 
 AudioPlayer.prototype.play = function ( index ) {
   index = index != undefined ? index : this.index;
+  index = this.items.length > 0 && index == -1 ? 0 : index;
   var source = (this.items[index] || {}).source;
   if ( !source ) return false;
 
@@ -85,7 +86,7 @@ AudioPlayer.prototype.play = function ( index ) {
   if ( changed ) {
     this.destroyAudio(this.audio);
     this.audio = this.createAudio(source);
-    this.trigger("changed");
+    this.trigger("change");
   }
 
   this.audio.play();
