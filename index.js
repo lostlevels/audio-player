@@ -84,6 +84,7 @@ AudioPlayer.prototype.play = function ( index ) {
   }
 
   if ( changed ) {
+    this.stop();
     this.destroyAudio(this.audio);
     this.audio = this.createAudio(source);
     this.trigger("change");
