@@ -43,6 +43,9 @@ AudioPlayer.prototype.remove = function ( item ) {
       this.killAudio();
     }
     this.items.splice(index, 1);
+    if ( this.index > index ) {
+      this.index--;
+    }
     this.trigger("remove");
   }
 };
