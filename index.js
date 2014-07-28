@@ -50,6 +50,13 @@ AudioPlayer.prototype.remove = function ( item ) {
   }
 };
 
+AudioPlayer.prototype.clear = function () {
+  while ( this.items.length ) {
+    this.remove(this.items[0]);
+  }
+  this.index = -1;
+};
+
 AudioPlayer.prototype.createAudio = function ( source ) {
   audio = new Audio(source);
   audio.source = source;
