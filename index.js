@@ -143,7 +143,7 @@ AudioPlayer.prototype.volume = function ( value ) {
 
   if ( this.vol != volume ) {
     this.vol = volume;
-    this.trigger("volume", this.getItem());
+    this.trigger("volume", this.getItem(), volume);
   }
 
   if ( this.audio ) {
