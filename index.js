@@ -13,17 +13,14 @@ function AudioPlayer () {
       ended: this.onAudioEnded.bind(this)
     }
   };
-  this.events = new Emitter();
 }
 
-AudioPlayer.prototype.trigger = function ( event ) {
-  this.events.emit(event, this);
-};
+Emitter(AudioPlayer.prototype)
 
 AudioPlayer.prototype.add = function ( item ) {
   if ( item && item.source && typeof item.source == "string" ) {
     this.items.push(item);
-    this.trigger("add", item);
+    this.emit("add", item);
     return this.items.length - 1;
   }
   return -1;
@@ -46,7 +43,7 @@ AudioPlayer.prototype.remove = function ( item ) {
     if ( this.index > index ) {
       this.index--;
     }
-    this.trigger("remove", item);
+    this.emit("remove", item);
   }
 };
 
@@ -97,11 +94,11 @@ AudioPlayer.prototype.play = function ( index ) {
   if ( changed ) {
     this.killAudio();
     this.audio = this.createAudio(source);
-    this.trigger("change");
+    this.emit("change");
   }
 
   this.audio.play();
-  this.trigger("play", item);
+  this.emit("play", item);
   return true;
 };
 
@@ -114,27 +111,27 @@ AudioPlayer.prototype.getItem = function(index) {
 AudioPlayer.prototype.pause = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.pause();
-  this.trigger("pause", this.getItem());
+  this.emit("pause", this.getItem());
 };
 
 AudioPlayer.prototype.stop = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.currentTime = 0.0;
   this.audio.pause();
-  this.trigger("stop", this.getItem());
+  this.emit("stop", this.getItem());
 };
 
 AudioPlayer.prototype.next = function () {
   var index = this.index + 1; 
   this.stop();
-  this.trigger("next", this.getItem(index));
+  this.emit("next", this.getItem(index));
   this.play(index);
 };
 
 AudioPlayer.prototype.previous = function () {
   var index = this.index - 1; 
   this.stop();
-  this.trigger("previous", this.getItem(index));
+  this.emit("previous", this.getItem(index));
   this.play(index);
 };
 
@@ -143,7 +140,7 @@ AudioPlayer.prototype.volume = function ( value ) {
 
   if ( this.vol != volume ) {
     this.vol = volume;
-    this.trigger("volume", this.getItem(), volume);
+    this.emit("volume", this.getItem(), volume);
   }
 
   if ( this.audio ) {
@@ -161,12 +158,12 @@ AudioPlayer.prototype.seek = function ( percent ) {
 };
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
-  this.trigger("error", this.getItem());
+  this.emit("error", this.getItem());
   this.killAudio();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {
-  this.trigger("ended", this.getItem());
+  this.emit("ended", this.getItem());
   if ( this.continuous ) {
     this.next();
   }
