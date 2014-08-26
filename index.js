@@ -23,7 +23,7 @@ AudioPlayer.prototype.trigger = function ( event ) {
 AudioPlayer.prototype.add = function ( item ) {
   if ( item && item.source && typeof item.source == "string" ) {
     this.items.push(item);
-    this.trigger("add");
+    this.trigger("add", item);
     return this.items.length - 1;
   }
   return -1;
@@ -46,7 +46,7 @@ AudioPlayer.prototype.remove = function ( item ) {
     if ( this.index > index ) {
       this.index--;
     }
-    this.trigger("remove");
+    this.trigger("remove", item);
   }
 };
 
@@ -82,9 +82,8 @@ AudioPlayer.prototype.killAudio = function () {
 };
 
 AudioPlayer.prototype.play = function ( index ) {
-  index = index != undefined ? index : this.index;
-  index = this.items.length > 0 && index == -1 ? 0 : index;
-  var source = (this.items[index] || {}).source;
+  var item = this.getItem(index)
+  var source = (item || {}).source;
   if ( !source ) return false;
 
   var changed = false;
@@ -102,34 +101,40 @@ AudioPlayer.prototype.play = function ( index ) {
   }
 
   this.audio.play();
-  this.trigger("play");
+  this.trigger("play", item);
   return true;
 };
+
+AudioPlayer.prototype.getItem = function(index) {
+  index = index == null ? this.index : index;
+  index = this.items.length > 0 && index == -1 ? 0 : index;
+  return this.items[index];
+}
 
 AudioPlayer.prototype.pause = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.pause();
-  this.trigger("pause");
+  this.trigger("pause", this.getItem());
 };
 
 AudioPlayer.prototype.stop = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.currentTime = 0.0;
   this.audio.pause();
-  this.trigger("stop");
+  this.trigger("stop", this.getItem());
 };
 
 AudioPlayer.prototype.next = function () {
   var index = this.index + 1; 
   this.stop();
-  this.trigger("next");
+  this.trigger("next", this.getItem(index));
   this.play(index);
 };
 
 AudioPlayer.prototype.previous = function () {
   var index = this.index - 1; 
   this.stop();
-  this.trigger("previous");
+  this.trigger("previous", this.getItem(index));
   this.play(index);
 };
 
@@ -138,7 +143,7 @@ AudioPlayer.prototype.volume = function ( value ) {
 
   if ( this.vol != volume ) {
     this.vol = volume;
-    this.trigger("volume");
+    this.trigger("volume", this.getItem());
   }
 
   if ( this.audio ) {
@@ -156,12 +161,12 @@ AudioPlayer.prototype.seek = function ( percent ) {
 };
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
-  this.trigger("error");
+  this.trigger("error", this.getItem());
   this.killAudio();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {
-  this.trigger("ended");
+  this.trigger("ended", this.getItem());
   if ( this.continuous ) {
     this.next();
   }
