@@ -15,7 +15,7 @@
   "scripts": {
     "build-dev": "component build --dev",
     "component": "component install --dev",
-    "test": "component test phantom"
+    "test": "component test"
   },
   "dependencies": {},
   "devDependencies": {

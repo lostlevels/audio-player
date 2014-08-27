@@ -79,7 +79,8 @@ AudioPlayer.prototype.killAudio = function () {
 };
 
 AudioPlayer.prototype.play = function ( index ) {
-  var item = this.getItem(index)
+  var index = this.getIndex(index);
+  var item = this.items[index];
   var source = (item || {}).source;
   if ( !source ) return false;
 
@@ -102,9 +103,15 @@ AudioPlayer.prototype.play = function ( index ) {
   return true;
 };
 
-AudioPlayer.prototype.getItem = function(index) {
+
+AudioPlayer.prototype.getIndex = function(index) {
   index = index == null ? this.index : index;
-  index = this.items.length > 0 && index == -1 ? 0 : index;
+  return this.items.length > 0 && index == -1 ? 0 : index;
+}
+
+
+AudioPlayer.prototype.getItem = function(index) {
+  var index = this.getIndex(index)
   return this.items[index];
 }
 
