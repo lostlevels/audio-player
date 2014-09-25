@@ -1,0 +1,27 @@
+{
+  "name": "audio-player",
+  "description": "audio-player",
+  "keywords": [
+    "audio-player",
+    "browser",
+    "component"
+  ],
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tm-components/audio-player.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build-dev": "component build --dev",
+    "component": "component install --dev",
+    "test": "component test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "component": "*",
+    "component-test": "*",
+    "expect.js": "*",
+    "mocha": "^1.21.4"
+  }
+}
