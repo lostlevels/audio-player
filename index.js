@@ -2,10 +2,16 @@
 var Point = require("point");
 var Emitter = require("emitter");
 
+function getRandomElement (items) {
+  return items[Math.floor(Math.random()*items.length)];
+}
+
 function AudioPlayer () {
   this.items = [];
   this.index = -1;
   this.continuous = true;
+  this.loop = false;
+  this.shuffle = false;
   this.vol = 1.0;
   this.listeners = {
     audio: {
@@ -13,17 +19,15 @@ function AudioPlayer () {
       ended: this.onAudioEnded.bind(this)
     }
   };
-  this.events = new Emitter();
+  this.clearPlayed();
 }
 
-AudioPlayer.prototype.trigger = function ( event ) {
-  this.events.emit(event, this);
-};
+Emitter(AudioPlayer.prototype);
 
 AudioPlayer.prototype.add = function ( item ) {
   if ( item && item.source && typeof item.source == "string" ) {
     this.items.push(item);
-    this.trigger("add");
+    this.emit("add", item);
     return this.items.length - 1;
   }
   return -1;
@@ -42,12 +46,39 @@ AudioPlayer.prototype.remove = function ( item ) {
     if ( index == this.index ) {
       this.killAudio();
     }
+
     this.items.splice(index, 1);
+
+    // Fix the current index.
     if ( this.index > index ) {
       this.index--;
     }
-    this.trigger("remove");
+
+    // Fix played array.
+    for (var i = 0; i < this.played.length; i++){
+      if ( this.played[i] > index ) this.played[i] = this.played[i]-1;
+    }
+
+    this.emit("remove", item);
   }
+};
+
+// Sets the items list without disrupting the player.
+AudioPlayer.prototype.set = function (items) {
+  var item = this.getItem(this.getIndex());
+  var self = this;
+  
+  if ( item ) {
+    items.forEach(function(nitem, i, arr){
+      if ( nitem.source == item.source ) {
+        self.index = i;
+      }
+    });
+  }
+
+  this.items = items;
+  this.clearPlayed();
+  this.emit("set");
 };
 
 AudioPlayer.prototype.clear = function () {
@@ -82,9 +113,9 @@ AudioPlayer.prototype.killAudio = function () {
 };
 
 AudioPlayer.prototype.play = function ( index ) {
-  index = index != undefined ? index : this.index;
-  index = this.items.length > 0 && index == -1 ? 0 : index;
-  var source = (this.items[index] || {}).source;
+  var index = this.getIndex(index);
+  var item = this.items[index];
+  var source = (item || {}).source;
   if ( !source ) return false;
 
   var changed = false;
@@ -98,38 +129,90 @@ AudioPlayer.prototype.play = function ( index ) {
   if ( changed ) {
     this.killAudio();
     this.audio = this.createAudio(source);
-    this.trigger("change");
+    this.emit("change");
   }
 
+  this.temp = item;
   this.audio.play();
-  this.trigger("play");
+  this.emit("play", item);
   return true;
+};
+
+
+AudioPlayer.prototype.getIndex = function(index) {
+  index = index == null ? this.index : index;
+  return this.items.length > 0 && index == -1 ? 0 : index;
+}
+
+
+AudioPlayer.prototype.getItem = function(index) {
+  return this.items[this.getIndex(index)];
+}
+
+AudioPlayer.prototype.getTempItem = function() {
+  return this.getItem() || this.temp;
 };
 
 AudioPlayer.prototype.pause = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.pause();
-  this.trigger("pause");
+  this.emit("pause", this.getTempItem());
 };
 
 AudioPlayer.prototype.stop = function () {
   if ( !this.audio || this.audio.error ) return;
   this.audio.currentTime = 0.0;
   this.audio.pause();
-  this.trigger("stop");
+  this.emit("stop", this.getTempItem());
 };
 
 AudioPlayer.prototype.next = function () {
-  var index = this.index + 1; 
+  var index = this.index;
+  this.played.push(index);
+
+  // Get the next track based on the mode.
+  if ( this.shuffle ) {
+    index = getRandomElement(this.getUnplayed()) || -1;
+  }
+  else {
+    index += 1;
+  }
+
+  // Reset the played tracks and start over.
+  if ( this.loop && this.invalidIndex(index) ) {
+    this.clearPlayed();
+    if ( this.shuffle ) {
+      index = getRandomElement(this.getUnplayed());
+    }
+    else {
+      index = 0;
+    }
+  }
+
+  if ( this.invalidIndex(index) ) return;
+
   this.stop();
-  this.trigger("next");
+  this.emit("next", this.getItem(index));
   this.play(index);
 };
 
 AudioPlayer.prototype.previous = function () {
-  var index = this.index - 1; 
+  var index = this.played.pop() || this.index - 1;
+
+  if ( this.loop && this.invalidIndex(index) ) {
+    this.clearPlayed();
+    if ( this.shuffle ) {
+      index = getRandomElement(this.getUnplayed());
+    }
+    else {
+      index = this.items.length - 1;
+    }
+  }
+
+  if ( this.invalidIndex(index) ) return;
+
   this.stop();
-  this.trigger("previous");
+  this.emit("previous", this.getItem(index));
   this.play(index);
 };
 
@@ -138,7 +221,7 @@ AudioPlayer.prototype.volume = function ( value ) {
 
   if ( this.vol != volume ) {
     this.vol = volume;
-    this.trigger("volume");
+    this.emit("volume", this.getTempItem(), volume);
   }
 
   if ( this.audio ) {
@@ -152,16 +235,42 @@ AudioPlayer.prototype.seek = function ( percent ) {
   if ( !this.audio || this.audio.error ) return;
 
   percent = Point.clamp(percent, 0.0, 1.0);
-  this.audio.currentTime = percent * this.audio.duration;
+  try {
+    this.audio.currentTime = percent * this.audio.duration;
+  }
+  catch (e) {
+    console.log("A seek error occured.\n"+e);
+  }
+};
+
+AudioPlayer.prototype.clearPlayed = function () {
+  this.played = [];
+};
+
+AudioPlayer.prototype.getUnplayed = function () {
+  var played = this.played;
+  var arr = this.items.map(function(v, i, a){ return i;});
+  for ( var i = 0; i < played.length; i++ ) {
+    var num = played[i];
+    var index = arr.indexOf(num);
+    if ( index > -1 ) {
+      arr.splice(index, 1);
+    }
+  }
+  return arr;
+};
+
+AudioPlayer.prototype.invalidIndex = function(index) {
+  return (index < 0 || index >= this.items.length);
 };
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
-  this.trigger("error");
+  this.emit("error", this.getTempItem());
   this.killAudio();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {
-  this.trigger("ended");
+  this.emit("ended", this.getTempItem());
   if ( this.continuous ) {
     this.next();
   }
