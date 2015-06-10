@@ -22,6 +22,7 @@ function AudioPlayer () {
   this.clearPlayed();
 }
 
+
 Emitter(AudioPlayer.prototype);
 
 AudioPlayer.prototype.add = function ( item ) {
@@ -114,8 +115,10 @@ AudioPlayer.prototype.killAudio = function () {
 
 AudioPlayer.prototype.play = function ( index ) {
   var index = this.getIndex(index);
+  console.log("index " + index);
   var item = this.items[index];
   var source = (item || {}).source;
+  console.log('source ' + source);
   if ( !source ) return false;
 
   var changed = false;
@@ -245,7 +248,7 @@ AudioPlayer.prototype.seek = function ( percent ) {
 
 AudioPlayer.prototype.clearPlayed = function () {
   this.played = [];
-};
+}
 
 AudioPlayer.prototype.getUnplayed = function () {
   var played = this.played;
@@ -260,13 +263,22 @@ AudioPlayer.prototype.getUnplayed = function () {
   return arr;
 };
 
+// TODO: break down into seperate methods; 
+AudioPlayer.prototype.restartPlay = function (number) {
+  if(number <=2){
+    return window.setTimeout(this.play, 1);
+  } else {
+    return window.setTimeout(this.play, this.restartPlay(n - 1)) + window.setTimeout(this.play, this.restartPlay(n - 2));
+  }
+};
+
 AudioPlayer.prototype.invalidIndex = function(index) {
   return (index < 0 || index >= this.items.length);
 };
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
   this.emit("error", this.getTempItem());
-  this.killAudio();
+  this.restartPlay(number);
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {

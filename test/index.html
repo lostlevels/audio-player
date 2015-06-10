@@ -29,11 +29,11 @@
   </head>
   <body>
     <h1>AudioPlayer</h1>
-    <button class="prev">Previous</button>
-    <button class="stop">Stop</button>
-    <button class="pause">Pause</button>
-    <button class="play">Play</button>
-    <button class="next">Next</button>
+    <button class="prev" do="prev">Previous</button>
+    <button class="stop" do="stop">Stop</button>
+    <button class="pause" do="pause">Pause</button>
+    <button class="play" do="play">Play</button>
+    <button class="next" do="next">Next</button>
     <ul class="playlist"></ul>
     <div>
       <label class="source-title">Source: <span></span></label>
@@ -46,6 +46,17 @@
       ap.addAndPlay({source:"./1 PM.mp3"});
       ap.add({source:"./2 PM.mp3"});
       ap.add({source:"./3 PM.mp3"});
+      
+      var button = document.getElementsByTagName("button");
+      for(var i = 0; i < button.length; i++) {
+        button[i].addEventListener('click', playerAction);
+      }
+      function playerAction() {
+        var element = this.getAttribute('do');
+
+        ap[element]();
+      }
+
 
     </script>
   </body>
