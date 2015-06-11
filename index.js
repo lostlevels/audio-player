@@ -7,16 +7,20 @@ function getRandomElement (items) {
 }
 
 function AudioPlayer () {
+  this.restartCount = 0;
   this.items = [];
   this.index = -1;
   this.continuous = true;
   this.loop = false;
   this.shuffle = false;
   this.vol = 1.0;
+  this.autoRestart = true;
+  this.restartRate = 200;
   this.listeners = {
     audio: {
       error: this.onAudioError.bind(this),
-      ended: this.onAudioEnded.bind(this)
+      ended: this.onAudioEnded.bind(this),
+      play: this.onAudioPlay.bind(this)
     }
   };
   this.clearPlayed();
@@ -115,10 +119,8 @@ AudioPlayer.prototype.killAudio = function () {
 
 AudioPlayer.prototype.play = function ( index ) {
   var index = this.getIndex(index);
-  console.log("index " + index);
   var item = this.items[index];
   var source = (item || {}).source;
-  console.log('source ' + source);
   if ( !source ) return false;
 
   var changed = false;
@@ -263,20 +265,12 @@ AudioPlayer.prototype.getUnplayed = function () {
   return arr;
 };
 
-function recurse (number) {
-  if (number <=2) {
-    return 1
-  } else {
-    return recurse(number - 1) + recurse(number - 2)
-  }
-};
-
 AudioPlayer.prototype.restartPlay = function () {
-  for (var i = 10; i <= 20; i++) {
-    var setTime = recurse(i);
-    console.log(setTime);
-    window.setTimeout(setTime, this.play(this.index));
-  }
+  this.restartCount++
+  setTimeout((function(){
+    console.log('attempting to play');
+    this.play();
+  }).bind(this), this.restartCount * this.restartRate)
 };
 
 AudioPlayer.prototype.invalidIndex = function(index) {
@@ -284,8 +278,14 @@ AudioPlayer.prototype.invalidIndex = function(index) {
 };
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
-  this.emit("error", this.getTempItem());
-  this.restartPlay();
+  ev = {
+    name: 'error',
+    shouldRestart: this.autoRestart,
+    item: this.getTempItem()
+  }
+  this.emit("error", ev);
+  console.log('audio error');
+  if (ev.shouldRestart) this.restartPlay();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {
@@ -293,6 +293,10 @@ AudioPlayer.prototype.onAudioEnded = function( e ) {
   if ( this.continuous ) {
     this.next();
   }
+};
+
+AudioPlayer.prototype.onAudioPlay = function () {
+  this.restartCount = 0;
 };
 
 module.exports = AudioPlayer;
