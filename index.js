@@ -263,12 +263,19 @@ AudioPlayer.prototype.getUnplayed = function () {
   return arr;
 };
 
-// TODO: break down into seperate methods; 
-AudioPlayer.prototype.restartPlay = function (number) {
-  if(number <=2){
-    return window.setTimeout(this.play, 1);
+function recurse (number) {
+  if (number <=2) {
+    return 1
   } else {
-    return window.setTimeout(this.play, this.restartPlay(n - 1)) + window.setTimeout(this.play, this.restartPlay(n - 2));
+    return recurse(number - 1) + recurse(number - 2)
+  }
+};
+
+AudioPlayer.prototype.restartPlay = function () {
+  for (var i = 10; i <= 20; i++) {
+    var setTime = recurse(i);
+    console.log(setTime);
+    window.setTimeout(setTime, this.play(this.index));
   }
 };
 
@@ -278,7 +285,7 @@ AudioPlayer.prototype.invalidIndex = function(index) {
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
   this.emit("error", this.getTempItem());
-  this.restartPlay(number);
+  this.restartPlay();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {

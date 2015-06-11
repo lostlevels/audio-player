@@ -29,11 +29,13 @@
   </head>
   <body>
     <h1>AudioPlayer</h1>
-    <button class="prev" do="prev">Previous</button>
+    <button class="prev" do="previous">Previous</button>
     <button class="stop" do="stop">Stop</button>
     <button class="pause" do="pause">Pause</button>
     <button class="play" do="play">Play</button>
     <button class="next" do="next">Next</button>
+    <button class="shuffle">Shuffle</button>
+    <button class="loop">Loop</button>
     <ul class="playlist"></ul>
     <div>
       <label class="source-title">Source: <span></span></label>
@@ -51,13 +53,28 @@
       for(var i = 0; i < button.length; i++) {
         button[i].addEventListener('click', playerAction);
       }
-      function playerAction() {
+
+      function playerAction () {
         var element = this.getAttribute('do');
+        console.log('element ' + element);
+        if (!element) {
+          var attribute = this.getAttribute('class');
+          toggleAttribute(attribute);
+        } else {
+          ap[element]();
+        }
+      };
 
-        ap[element]();
-      }
-
-
+      function toggleAttribute (attribute) {
+        if(ap[attribute] === true) {
+          ap[attribute] = false; 
+          console.log(attribute + " " + ap[attribute]);
+        } else {
+          ap[attribute] = true;
+          console.log(attribute + " " + ap[attribute]);
+        }
+        console.log('Audio Player ' + ap.shuffle + ap.loop);
+      };
     </script>
   </body>
 </html>
