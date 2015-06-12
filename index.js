@@ -7,7 +7,6 @@ function getRandomElement (items) {
 }
 
 function AudioPlayer () {
-  this.restartCount = 0;
   this.items = [];
   this.index = -1;
   this.continuous = true;
@@ -15,12 +14,15 @@ function AudioPlayer () {
   this.shuffle = false;
   this.vol = 1.0;
   this.autoRestart = true;
+  this.restartCount = 0;
   this.restartRate = 200;
+  this.currentTime = 0;
   this.listeners = {
     audio: {
       error: this.onAudioError.bind(this),
-      ended: this.onAudioEnded.bind(this)
-//      play: this.onAudioPlay.bind(this)
+      ended: this.onAudioEnded.bind(this),
+      play: this.onAudioPlay.bind(this),
+      timeupdate: this.onAudioPlaying.bind(this)
     }
   };
   this.clearPlayed();
@@ -98,6 +100,7 @@ AudioPlayer.prototype.createAudio = function ( source ) {
   audio.source = source;
   audio.volume = this.vol;
   for ( var key in this.listeners.audio ) {
+    console.log(key)
     audio.addEventListener(key, this.listeners.audio[key]);
   }
   return audio;
@@ -302,8 +305,12 @@ AudioPlayer.prototype.onAudioEnded = function( e ) {
   }
 };
 
-//AudioPlayer.prototype.onAudioPlay = function () {
-//  this.restartCount = 0;
-//};
+AudioPlayer.prototype.onAudioPlay = function () {
+  this.restartCount = 0;
+};
+
+AudioPlayer.prototype.onAudioPlaying = function () {
+  this.currentTime = this.audio.currentTime; 
+};
 
 module.exports = AudioPlayer;
