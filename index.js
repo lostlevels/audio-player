@@ -99,6 +99,8 @@ AudioPlayer.prototype.createAudio = function ( source ) {
   audio = new Audio(source);
   audio.source = source;
   audio.volume = this.vol;
+  audio.currentTime = this.currentTime; // set currentTime when the song gets restarted
+  console.log(this.currentTime);
   for ( var key in this.listeners.audio ) {
     console.log(key)
     audio.addEventListener(key, this.listeners.audio[key]);
@@ -286,6 +288,7 @@ AudioPlayer.prototype.restartPlay = function () {
 AudioPlayer.prototype.invalidIndex = function(index) {
   return (index < 0 || index >= this.items.length);
 };
+
 
 AudioPlayer.prototype.onAudioError = function ( e ) {
   ev = {
