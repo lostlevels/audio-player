@@ -100,9 +100,7 @@ AudioPlayer.prototype.createAudio = function ( source ) {
   audio.source = source;
   audio.volume = this.vol;
   audio.currentTime = this.currentTime; // set currentTime when the song gets restarted
-  console.log(this.currentTime);
   for ( var key in this.listeners.audio ) {
-    console.log(key)
     audio.addEventListener(key, this.listeners.audio[key]);
   }
   return audio;
@@ -278,10 +276,8 @@ AudioPlayer.prototype.getUnplayed = function () {
 AudioPlayer.prototype.restartPlay = function () {
   this.restartCount++;
   setTimeout((function(){
-    console.log('attempting to play');
     this.play();
   }).bind(this), this.restartCount * this.restartRate)
-  console.log(this.restartCount);
   console.log(this.index);
 };
 
@@ -297,7 +293,6 @@ AudioPlayer.prototype.onAudioError = function ( e ) {
     item: this.getTempItem()
   }
   this.emit("error", ev);
-  console.log('audio error');
   if (ev.shouldRestart) this.restartPlay();
 };
 
