@@ -19,8 +19,8 @@ function AudioPlayer () {
   this.listeners = {
     audio: {
       error: this.onAudioError.bind(this),
-      ended: this.onAudioEnded.bind(this),
-      play: this.onAudioPlay.bind(this)
+      ended: this.onAudioEnded.bind(this)
+//      play: this.onAudioPlay.bind(this)
     }
   };
   this.clearPlayed();
@@ -266,11 +266,13 @@ AudioPlayer.prototype.getUnplayed = function () {
 };
 
 AudioPlayer.prototype.restartPlay = function () {
-  this.restartCount++
+  this.restartCount++;
   setTimeout((function(){
     console.log('attempting to play');
-    this.play();
+    this.next();
   }).bind(this), this.restartCount * this.restartRate)
+  console.log(this.restartCount);
+  console.log(this.index);
 };
 
 AudioPlayer.prototype.invalidIndex = function(index) {
@@ -295,8 +297,8 @@ AudioPlayer.prototype.onAudioEnded = function( e ) {
   }
 };
 
-AudioPlayer.prototype.onAudioPlay = function () {
-  this.restartCount = 0;
-};
+//AudioPlayer.prototype.onAudioPlay = function () {
+//  this.restartCount = 0;
+//};
 
 module.exports = AudioPlayer;
