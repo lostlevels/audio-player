@@ -137,6 +137,11 @@ AudioPlayer.prototype.play = function ( index ) {
     this.emit("change");
   }
 
+  if (this.restartCount > 0) {
+    this.audio = this.createAudio(source) 
+    this.emit("restart");
+  }
+
   this.temp = item;
   this.audio.play();
   this.emit("play", item);
@@ -269,7 +274,7 @@ AudioPlayer.prototype.restartPlay = function () {
   this.restartCount++;
   setTimeout((function(){
     console.log('attempting to play');
-    this.next();
+    this.play();
   }).bind(this), this.restartCount * this.restartRate)
   console.log(this.restartCount);
   console.log(this.index);
