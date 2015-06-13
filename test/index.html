@@ -2,7 +2,6 @@
   <head>
     <title>AudioPlayer</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="../build/build.css" type="text/css">
     <style>
       body {
         margin: 0;
@@ -38,8 +37,8 @@
     <button class="loop">Loop</button>
     <ul class="playlist"></ul>
     <div>
-      <label class="source-title">Source: <span></span></label>
-      <label class="time-remaining">Time Remaining: <span></span></label>
+      <label>Source: <span id="source-title"></span></label>
+      <label>Time Remaining: <span id="time-remaining"></span></label>
     </div>
     <script src="../build/build.js"></script>
     <script>
@@ -48,14 +47,31 @@
       ap.addAndPlay({source:"./1 PM.mp3"});
       ap.add({source:"./2 PM.mp3"});
       ap.add({source:"./3 PM.mp3"});
-      ap.add({source:"./The Fire.mp3"});
-      ap.add({source:"./Divided.mp3"});
-      ap.add({source:"./Closer.mp3"});
+
+      ap.addEventListener('play', createAudioListeners);
       
+      //buttons to respond to their individual actions; 
       var button = document.getElementsByTagName("button");
-      for(var i = 0; i < button.length; i++) {
+      for (var i = 0; i < button.length; i++) {
         button[i].addEventListener('click', playerAction);
-      }
+      };
+      
+      // display time + sourece;
+      function createAudioListeners () {
+        audio.addEventListener('playing', updateSource);
+        audio.addEventListener('timeupdate', updateTime);
+      };
+
+      function updateTime () {
+        var time = document.getElementById("time-remaining");
+        time.innerHTML = (ap.audio.duration - ap.audio.currentTime).toFixed(2);
+      };
+
+      function updateSource () {
+        var source = document.getElementById("source-title");
+        source.innerHTML = ap.audio.source;
+
+      };
 
       function playerAction () {
         var element = this.getAttribute('do');

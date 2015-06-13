@@ -278,7 +278,6 @@ AudioPlayer.prototype.restartPlay = function () {
   setTimeout((function(){
     this.play();
   }).bind(this), this.restartCount * this.restartRate)
-  console.log(this.index);
 };
 
 AudioPlayer.prototype.invalidIndex = function(index) {
