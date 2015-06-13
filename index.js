@@ -99,7 +99,7 @@ AudioPlayer.prototype.createAudio = function ( source ) {
   audio = new Audio(source);
   audio.source = source;
   audio.volume = this.vol;
-  audio.currentTime = this.currentTime; // set currentTime when the song gets restarted
+  audio.currentTime = this.currentTime; // set currentTime when song gets restarted
   for ( var key in this.listeners.audio ) {
     audio.addEventListener(key, this.listeners.audio[key]);
   }

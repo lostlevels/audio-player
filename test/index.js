@@ -1,23 +1,55 @@
+var AudioPlayer = require("audio-player");
+// first playlist
+var ap = new AudioPlayer();
+ap.addAndPlay({source:"./1 PM.mp3"});
+ap.add({source:"./2 PM.mp3"});
+ap.add({source:"./3 PM.mp3"});
 
-var expect = require('expect')
-var AudioPlayer = require('audio-player')
+//second playlist
+var ap2 = new AudioPlayer();
+ap2.add({source:""});
+ap2.add({source:""});
+ap2.add({source:""});
 
-describe('test', function(){
-  it('gets and item', function(){
-    var item = { source: "./1 PM.mp3" };
-    var audio = new AudioPlayer();
-    var index = audio.add(item)
-    expect(index).to.be(0);
-  });
+ap.addEventListener('play', createAudioListeners);
 
-  it('index isnt undefined after playing from pause', function(){
-    var player = new AudioPlayer();
-    player.add({ source: "./1 PM.mp3" })
-    player.play();
-    expect(player.index).to.be(0);
-    player.pause();
-    expect(player.index).to.be(0);
-    player.play();
-    expect(player.index).to.be(0);
-  });
-});
+//buttons to respond to their individual actions; 
+var button = document.getElementsByTagName("button");
+for (var i = 0; i < button.length; i++) {
+  button[i].addEventListener('click', playerAction);
+};
+
+// display time + sourece;
+function createAudioListeners () {
+  audio.addEventListener('playing', updateSource);
+  audio.addEventListener('timeupdate', updateTime);
+};
+
+function updateTime () {
+  var time = document.getElementById("time-remaining");
+  time.innerHTML = (ap.audio.duration - ap.audio.currentTime).toFixed(2);
+};
+
+function updateSource () {
+  var source = document.getElementById("source-title");
+  source.innerHTML = ap.audio.source;
+
+};
+
+function playerAction () {
+  var element = this.getAttribute('do');
+  if (!element) {
+    var attribute = this.getAttribute('class');
+    toggleAttribute(attribute);
+  } else {
+    ap[element]();
+  }
+};
+
+function toggleAttribute (attribute) {
+  if( ap[attribute] === true ) {
+    ap[attribute] = false;
+  } else {
+    ap[attribute] = true;
+  }
+}

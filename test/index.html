@@ -33,6 +33,7 @@
     <button class="pause" do="pause">Pause</button>
     <button class="play" do="play">Play</button>
     <button class="next" do="next">Next</button>
+    <button class="swap" do="set">Swap</button>
     <button class="shuffle">Shuffle</button>
     <button class="loop">Loop</button>
     <ul class="playlist"></ul>
@@ -41,56 +42,6 @@
       <label>Time Remaining: <span id="time-remaining"></span></label>
     </div>
     <script src="../build/build.js"></script>
-    <script>
-      var AudioPlayer = require("audio-player");
-      var ap = new AudioPlayer();
-      ap.addAndPlay({source:"./1 PM.mp3"});
-      ap.add({source:"./2 PM.mp3"});
-      ap.add({source:"./3 PM.mp3"});
-
-      ap.addEventListener('play', createAudioListeners);
-      
-      //buttons to respond to their individual actions; 
-      var button = document.getElementsByTagName("button");
-      for (var i = 0; i < button.length; i++) {
-        button[i].addEventListener('click', playerAction);
-      };
-      
-      // display time + sourece;
-      function createAudioListeners () {
-        audio.addEventListener('playing', updateSource);
-        audio.addEventListener('timeupdate', updateTime);
-      };
-
-      function updateTime () {
-        var time = document.getElementById("time-remaining");
-        time.innerHTML = (ap.audio.duration - ap.audio.currentTime).toFixed(2);
-      };
-
-      function updateSource () {
-        var source = document.getElementById("source-title");
-        source.innerHTML = ap.audio.source;
-
-      };
-
-      function playerAction () {
-        var element = this.getAttribute('do');
-        if (!element) {
-          var attribute = this.getAttribute('class');
-          toggleAttribute(attribute);
-        } else {
-          ap[element]();
-        }
-      };
-      
-      function toggleAttribute (attribute) {
-        if( ap[attribute] === true ) {
-          ap[attribute] = false;
-        } else {
-          ap[attribute] = true;
-        }
-      }
-
-    </script>
+    <script src="./index.js"></script>
   </body>
 </html>
