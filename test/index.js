@@ -7,9 +7,12 @@ ap.add({source:"./3 PM.mp3"});
 
 //second playlist
 var ap2 = new AudioPlayer();
-ap2.add({source:""});
-ap2.add({source:""});
-ap2.add({source:""});
+ap2.add({source:"./glass0.mp3"});
+ap2.add({source:"./glass1.mp3"});
+ap2.add({source:"./glass2.mp3"});
+ap2.add({source:"./glass3.mp3"});
+ap2.add({source:"./glass4.mp3"});
+ap2.add({source:"./glass5.mp3"});
 
 ap.addEventListener('play', createAudioListeners);
 
@@ -41,6 +44,8 @@ function playerAction () {
   if (!element) {
     var attribute = this.getAttribute('class');
     toggleAttribute(attribute);
+  } else if (element === "set") {
+    ap[element](ap2.items);
   } else {
     ap[element]();
   }
