@@ -1,20 +1,32 @@
 var AudioPlayer = require("audio-player");
-// first playlist
+
 var ap = new AudioPlayer();
 ap.addAndPlay({source:"./1 PM.mp3"});
 ap.add({source:"./2 PM.mp3"});
 ap.add({source:"./3 PM.mp3"});
 
-//second playlist
 var ap2 = new AudioPlayer();
-ap2.add({source:"./glass0.mp3"});
-ap2.add({source:"./glass1.mp3"});
-ap2.add({source:"./glass2.mp3"});
-ap2.add({source:"./glass3.mp3"});
-ap2.add({source:"./glass4.mp3"});
-ap2.add({source:"./glass5.mp3"});
+ap2.add({source:"./nevgen01.mp3"})
+ap2.add({source:"./nevgen02.mp3"})
+ap2.add({source:"./nevgen03.mp3"})
+ap2.add({source:"./nevgen04.mp3"})
+ap2.add({source:"./nevgen05.mp3"})
+ap2.add({source:"./nevgen06.mp3"})
+
+var ap3 = new AudioPlayer();
+ap3.add({source:"./glass0.mp3"});
+ap3.add({source:"./glass1.mp3"});
+ap3.add({source:"./glass2.mp3"});
+ap3.add({source:"./glass3.mp3"});
+ap3.add({source:"./glass4.mp3"});
+ap3.add({source:"./glass5.mp3"});
 
 ap.addEventListener('play', createAudioListeners);
+
+var playlists = [];
+playlists.push(ap.items);
+playlists.push(ap2.items);
+playlists.push(ap3.items);
 
 //buttons to respond to their individual actions; 
 var button = document.getElementsByTagName("button");
@@ -45,7 +57,7 @@ function playerAction () {
     var attribute = this.getAttribute('class');
     toggleAttribute(attribute);
   } else if (element === "set") {
-    ap[element](ap2.items);
+    togglePlaylist(element);
   } else {
     ap[element]();
   }
@@ -57,4 +69,17 @@ function toggleAttribute (attribute) {
   } else {
     ap[attribute] = true;
   }
-}
+};
+
+function togglePlaylist (element) {
+  var currentPlaylist = playlists[0];
+  for (var i = 0; i < playlists.length; i++) {
+    if (currentPlaylist === playlists[i]) {
+      currentPlaylist = playlists[i+1];
+    }
+    if (currentPlaylist === playlists.length) { // restart
+      currentPlaylist = playlists[0];
+    }
+    ap[element](currentPlaylist);
+  }
+};
