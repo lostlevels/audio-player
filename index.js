@@ -149,6 +149,7 @@ AudioPlayer.prototype.play = function ( index ) {
   this.audio.play();
   this.emit("play", item);
   return true;
+
 };
 
 
@@ -270,6 +271,7 @@ AudioPlayer.prototype.getUnplayed = function () {
       arr.splice(index, 1);
     }
   }
+  console.log("array " + arr);
   return arr;
 };
 
