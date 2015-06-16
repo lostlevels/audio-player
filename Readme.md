@@ -12,3 +12,5 @@ An component to play audio from a list of sources.
 ## Example
 
   Look at the test folder.
+  
+  To run example locally on your machine, `make` within the directory.  
