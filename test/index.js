@@ -1,7 +1,7 @@
 var AudioPlayer = require("audio-player");
 
 var ap = new AudioPlayer();
-ap.addAndPlay({source:"./1 PM.mp3"});
+ap.add({source:"./1 PM.mp3"});
 ap.add({source:"./2 PM.mp3"});
 ap.add({source:"./3 PM.mp3"});
 
@@ -35,6 +35,7 @@ ap.add({source:"./Op. 62 No. 2.mp3"});
 ap.add({source:"./Op. 72 No. 1.mp3"});
 
 ap.addEventListener('play', createAudioListeners);
+ap.play();
 
 //var playlists = [];
 //playlists.push(ap.items);
@@ -50,12 +51,12 @@ for (var i = 0; i < button.length; i++) {
 // display time + sourece;
 function createAudioListeners () {
   audio.addEventListener('playing', updateSource);
-  //audio.addEventListener('playing', updateTime);
+  audio.addEventListener('timeupdate', updateTime);
 };
 
 function updateTime () {
   var time = document.getElementById("time-remaining");
-  time.innerHTML = ap.audio.currentTime.toFixed(2);
+  time.innerHTML = (ap.audio.duration - ap.audio.currentTime).toFixed(2);
 };
 
 function updateSource () {
@@ -84,15 +85,15 @@ function toggleAttribute (attribute) {
   }
 };
 
-function togglePlaylist (element) {
-  var currentPlaylist = playlists[0];
-  var playlistLength = playlists.length;
-  for (var i = 0; i < playlistLength; i++) {
-    if (currentPlaylist === playlists[playlistLength-1]) { // restart playlist
-      currentPlaylist = playlists[0];
-    } else if (currentPlaylist === playlists[i]) {
-      currentPlaylist = playlists[i+1];
-    }
-  }
-  ap[element](currentPlaylist);
-};
+//function togglePlaylist (element) {
+//  var currentPlaylist = playlists[0];
+//  var playlistLength = playlists.length;
+//  for (var i = 0; i < playlistLength; i++) {
+//    if (currentPlaylist === playlists[playlistLength-1]) { // restart playlist
+//      currentPlaylist = playlists[0];
+//    } else if (currentPlaylist === playlists[i]) {
+//      currentPlaylist = playlists[i+1];
+//    }
+//  }
+//  ap[element](currentPlaylist);
+//};

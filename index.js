@@ -3,7 +3,9 @@ var Point = require("point");
 var Emitter = require("emitter");
 
 function getRandomElement (items) {
-  return items[Math.floor(Math.random()*items.length)];
+  var rando = items[Math.floor(Math.random()*items.length)];
+  console.log("random item " + rando);
+  return rando;
 }
 
 function AudioPlayer () {
@@ -99,7 +101,6 @@ AudioPlayer.prototype.createAudio = function ( source ) {
   audio = new Audio(source);
   audio.source = source;
   audio.volume = this.vol;
-  audio.currentTime = this.currentTime; // set currentTime when song gets restarted
   for ( var key in this.listeners.audio ) {
     audio.addEventListener(key, this.listeners.audio[key]);
   }
@@ -142,6 +143,7 @@ AudioPlayer.prototype.play = function ( index ) {
 
   if (this.restartCount > 0) {
     this.audio = this.createAudio(source) 
+    this.audio.currentTime = this.currentTime; // set currentTime when song gets restarted
     this.emit("restart");
   }
 
@@ -186,7 +188,8 @@ AudioPlayer.prototype.next = function () {
 
   // Get the next track based on the mode.
   if ( this.shuffle ) {
-    index = getRandomElement(this.getUnplayed()) || -1;
+    index = getRandomElement(this.getUnplayed());
+    if(isNaN(index)) index = -1;
   }
   else {
     index += 1;
