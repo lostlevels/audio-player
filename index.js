@@ -3,9 +3,7 @@ var Point = require("point");
 var Emitter = require("emitter");
 
 function getRandomElement (items) {
-  var rando = items[Math.floor(Math.random()*items.length)];
-  console.log("random item " + rando);
-  return rando;
+  return items[Math.floor(Math.random()*items.length)];
 }
 
 function AudioPlayer () {
@@ -274,7 +272,6 @@ AudioPlayer.prototype.getUnplayed = function () {
       arr.splice(index, 1);
     }
   }
-  console.log("array " + arr);
   return arr;
 };
 
