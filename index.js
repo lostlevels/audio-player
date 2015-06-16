@@ -13,14 +13,21 @@ function AudioPlayer () {
   this.loop = false;
   this.shuffle = false;
   this.vol = 1.0;
+  this.autoRestart = true;
+  this.restartCount = 0;
+  this.restartRate = 200;
+  this.currentTime = 0;
   this.listeners = {
     audio: {
       error: this.onAudioError.bind(this),
-      ended: this.onAudioEnded.bind(this)
+      ended: this.onAudioEnded.bind(this),
+      play: this.onAudioPlay.bind(this),
+      timeupdate: this.onAudioPlaying.bind(this)
     }
   };
   this.clearPlayed();
 }
+
 
 Emitter(AudioPlayer.prototype);
 
@@ -132,10 +139,17 @@ AudioPlayer.prototype.play = function ( index ) {
     this.emit("change");
   }
 
+  if (this.restartCount > 0) {
+    this.audio = this.createAudio(source) 
+    this.audio.currentTime = this.currentTime; // set currentTime when song gets restarted
+    this.emit("restart");
+  }
+
   this.temp = item;
   this.audio.play();
   this.emit("play", item);
   return true;
+
 };
 
 
@@ -172,7 +186,8 @@ AudioPlayer.prototype.next = function () {
 
   // Get the next track based on the mode.
   if ( this.shuffle ) {
-    index = getRandomElement(this.getUnplayed()) || -1;
+    index = getRandomElement(this.getUnplayed());
+    if(isNaN(index)) index = -1;
   }
   else {
     index += 1;
@@ -245,7 +260,7 @@ AudioPlayer.prototype.seek = function ( percent ) {
 
 AudioPlayer.prototype.clearPlayed = function () {
   this.played = [];
-};
+}
 
 AudioPlayer.prototype.getUnplayed = function () {
   var played = this.played;
@@ -260,13 +275,26 @@ AudioPlayer.prototype.getUnplayed = function () {
   return arr;
 };
 
+AudioPlayer.prototype.restartPlay = function () {
+  this.restartCount++;
+  setTimeout((function(){
+    this.play();
+  }).bind(this), this.restartCount * this.restartRate)
+};
+
 AudioPlayer.prototype.invalidIndex = function(index) {
   return (index < 0 || index >= this.items.length);
 };
 
+
 AudioPlayer.prototype.onAudioError = function ( e ) {
-  this.emit("error", this.getTempItem());
-  this.killAudio();
+  ev = {
+    name: 'error',
+    shouldRestart: this.autoRestart,
+    item: this.getTempItem()
+  }
+  this.emit("error", ev);
+  if (ev.shouldRestart) this.restartPlay();
 };
 
 AudioPlayer.prototype.onAudioEnded = function( e ) {
@@ -274,6 +302,14 @@ AudioPlayer.prototype.onAudioEnded = function( e ) {
   if ( this.continuous ) {
     this.next();
   }
+};
+
+AudioPlayer.prototype.onAudioPlay = function () {
+  this.restartCount = 0;
+};
+
+AudioPlayer.prototype.onAudioPlaying = function () {
+  this.currentTime = this.audio.currentTime; 
 };
 
 module.exports = AudioPlayer;

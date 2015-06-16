@@ -2,7 +2,6 @@
   <head>
     <title>AudioPlayer</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="../build/build.css" type="text/css">
     <style>
       body {
         margin: 0;
@@ -29,24 +28,20 @@
   </head>
   <body>
     <h1>AudioPlayer</h1>
-    <button class="prev">Previous</button>
-    <button class="stop">Stop</button>
-    <button class="pause">Pause</button>
-    <button class="play">Play</button>
-    <button class="next">Next</button>
+    <button class="prev" do="previous">Previous</button>
+    <button class="stop" do="stop">Stop</button>
+    <button class="pause" do="pause">Pause</button>
+    <button class="play" do="play">Play</button>
+    <button class="next" do="next">Next</button>
+    <button class="swap" do="set">Swap</button>
+    <button class="shuffle">Shuffle</button>
+    <button class="loop">Loop</button>
     <ul class="playlist"></ul>
     <div>
-      <label class="source-title">Source: <span></span></label>
-      <label class="time-remaining">Time Remaining: <span></span></label>
+      <label>Source: <span id="source-title"></span></label>
+      <label>Time Remaining: <span id="time-remaining"></span></label>
     </div>
     <script src="../build/build.js"></script>
-    <script>
-      var AudioPlayer = require("audio-player");
-      var ap = new AudioPlayer();
-      ap.addAndPlay({source:"./1 PM.mp3"});
-      ap.add({source:"./2 PM.mp3"});
-      ap.add({source:"./3 PM.mp3"});
-
-    </script>
+    <script src="./index.js"></script>
   </body>
 </html>

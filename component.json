@@ -11,9 +11,6 @@
     "component/emitter": "*",
     "tm-components/point": "*"
   },
-  "development": {
-    "jb55/expect.js": "*"
-  },
   "scripts": [
     "index.js"
   ]
