@@ -293,7 +293,7 @@ AudioPlayer.prototype.onAudioError = function ( e ) {
     shouldRestart: this.autoRestart,
     item: this.getTempItem()
   }
-  this.emit("error", ev);
+  this.emit("error", ev.item, ev);
   if (ev.shouldRestart) this.restartPlay();
 };
 
