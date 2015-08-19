@@ -175,9 +175,10 @@ AudioPlayer.prototype.pause = function () {
 
 AudioPlayer.prototype.stop = function () {
   if ( !this.audio || this.audio.error ) return;
+  this.emit("beforeStop");
+  this.emit("stop", this.getTempItem());
   this.audio.currentTime = 0.0;
   this.audio.pause();
-  this.emit("stop", this.getTempItem());
 };
 
 AudioPlayer.prototype.next = function () {
@@ -278,6 +279,7 @@ AudioPlayer.prototype.getUnplayed = function () {
 AudioPlayer.prototype.restartPlay = function () {
   this.restartCount++;
   setTimeout((function(){
+    console.log("restarting playing");
     this.play();
   }).bind(this), this.restartCount * this.restartRate)
 };
@@ -294,6 +296,7 @@ AudioPlayer.prototype.onAudioError = function ( e ) {
     item: this.getTempItem()
   }
   this.emit("error", ev.item, ev);
+  console.log("error", ev)
   if (ev.shouldRestart) this.restartPlay();
 };
 
