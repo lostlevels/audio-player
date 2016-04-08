@@ -141,7 +141,9 @@ AudioPlayer.prototype.play = function ( index ) {
 
   if (this.restartCount > 0) {
     this.audio = this.createAudio(source) 
-    this.audio.currentTime = this.currentTime; // set currentTime when song gets restarted
+    if (this.audio.readyState !== 0) {
+      this.audio.currentTime = this.currentTime; // set currentTime when song gets restarted
+    }
     this.emit("restart");
   }
 
