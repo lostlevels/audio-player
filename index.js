@@ -179,7 +179,9 @@ AudioPlayer.prototype.stop = function () {
   if ( !this.audio || this.audio.error ) return;
   this.emit("beforeStop");
   this.emit("stop", this.getTempItem());
-  this.audio.currentTime = 0.0;
+  if (this.audio.readyState !== 0) {
+    this.audio.currentTime = 0.0;
+  }
   this.audio.pause();
 };
 
